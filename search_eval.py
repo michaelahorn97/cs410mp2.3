@@ -59,8 +59,6 @@ if __name__ == '__main__':
     query_path = query_cfg.get('query-path', 'queries.txt')
     query_start = query_cfg.get('query-id-start', 0)
 
-    result_inl2, result_bm25 = [],[]
-
     query = metapy.index.Document()
     print('Running queries')
     with open(query_path) as query_file:
@@ -68,53 +66,6 @@ if __name__ == '__main__':
             query.content(line.strip())
             results = ranker.score(idx, query, top_k)
             avg_p = ev.avg_p(results, query_start + query_num, top_k)
-            result_inl2.append(format(avg_p))#append the avg to a list
             print("Query {} average precision: {}".format(query_num + 1, avg_p))
     print("Mean average precision: {}".format(ev.map()))
     print("Elapsed: {} seconds".format(round(time.time() - start_time, 4)))
-
-    # Comparing with parameter evaluation using BM25
-    # Build the query object and initialize a ranker
-    query = metapy.index.Document()
-    ranker_bm25 = metapy.index.OkapiBM25(k1=1.2,b=0.75,k3=500)
-    # To do an IR evaluation, we need to use the queries file and relevance judgements.
-    ev_bm25 = metapy.index.IREval('config.toml')
-    # Load the query_start from config.toml or default to zero if not found
-    with open('config.toml', 'r') as fin:
-            cfg_d = pytoml.load(fin)
-    query_cfg = cfg_d['query-runner']
-    query_start = query_cfg.get('query-id-start', 0)
-    # We will loop over the queries file and add each result to the IREval object ev.
-    num_results = 10
-    with open('cranfield-queries.txt') as query_file:
-        for query_num, line in enumerate(query_file):
-            query.content(line.strip())
-            results = ranker_bm25.score(idx, query, num_results)                            
-            avg_p_bm25 = ev_bm25.avg_p(results, query_start + query_num, num_results)
-            result_bm25.append(format(avg_p_bm25)) #append the avg to a list
-            #print("Query {} average precision: {}".format(query_num + 1, avg_p_bm25))
-    ev_bm25.map()
-    #print("Mean average precision: {}".format(ev.map()))
-    #check the list
-    #print(result_inl2)
-    #print(result_bm25)
-
-    #write to text
-    with open ('inl2.avg_p.txt','w') as output:
-        for item in result_inl2:
-            output.write("%s\n" % item)
-
-    with open ('bm25.avg_p.txt','w') as output:
-        for item in result_bm25:
-            output.write("%s\n" % item)
-
-    #calculate t-test
-    #std deviation
-    #std_dev = [] 
-    #std_dev = np.sqrt((result_inl2 + result_bm25)/2)
-    #t = (result_inl2.mean() - result_bm25.mean())/(std_dev*np.sqrt(2/N))
-
-    result_inl2 = np.array(map(float,result_inl2))
-    result_bm25 = np.array(map(float,result_bm25))
-    #stats.ttest_ind(result_inl2,result_bm25)
-    #print(stats.ttest_ind(result_inl2,result_bm25))
