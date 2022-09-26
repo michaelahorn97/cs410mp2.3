@@ -5,8 +5,6 @@ import time
 import metapy
 import pytoml
 
-import numpy as np
-#from scipy import stats
 
 class InL2Ranker(metapy.index.RankingFunction):
     """
